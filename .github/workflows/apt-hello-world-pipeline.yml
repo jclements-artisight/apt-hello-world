@@ -1,0 +1,116 @@
+name: Package Pipeline
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+env:
+  PACKAGE_NAME: artisight-hello-world
+
+jobs:
+  package-amd64:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Debian environment
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y dpkg-dev tree gettext
+
+      - name: Display directory structure
+        run: |
+          pwd
+          tree
+          ls -lrath
+
+      - name: Set package version
+        id: vars
+        run: echo "PACKAGE_VERSION=$(cat version)" >> $GITHUB_ENV
+
+      - name: Build Debian package for amd64
+        run: |
+          mkdir -p artisight-hello-world-amd64/DEBIAN
+          chmod 0755 artisight-hello-world-amd64/DEBIAN
+          chmod 644 artisight-hello-world-amd64/lib/systemd/system/artisight-hello-world.service
+          envsubst < control.template.amd64 > artisight-hello-world-amd64/DEBIAN/control
+          dpkg-deb --build artisight-hello-world-amd64 "${{ env.PACKAGE_NAME }}_${{ env.PACKAGE_VERSION }}_amd64.deb"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: deb-packages
+          path: '*.deb'
+
+  package-arm64:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Debian environment
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y dpkg-dev tree gettext
+
+      - name: Display directory structure
+        run: |
+          pwd
+          tree
+          ls -lrath
+
+      - name: Set package version
+        id: vars
+        run: echo "PACKAGE_VERSION=$(cat version)" >> $GITHUB_ENV
+
+      - name: Build Debian package for arm64
+        run: |
+          mkdir -p artisight-hello-world-arm64/DEBIAN
+          chmod 0755 artisight-hello-world-arm64/DEBIAN
+          chmod 644 artisight-hello-world-arm64/lib/systemd/system/artisight-hello-world.service
+          envsubst < control.template.arm64 > artisight-hello-world-arm64/DEBIAN/control
+          dpkg-deb --build artisight-hello-world-arm64 "${{ env.PACKAGE_NAME }}_${{ env.PACKAGE_VERSION }}_arm64.deb"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: deb-packages
+          path: '*.deb'
+
+  package-all:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Debian environment
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y dpkg-dev tree gettext
+
+      - name: Display directory structure
+        run: |
+          pwd
+          tree
+          ls -lrath
+
+      - name: Set package version
+        id: vars
+        run: echo "PACKAGE_VERSION=$(cat version)" >> $GITHUB_ENV
+
+      - name: Build Debian package for all
+        run: |
+          mkdir -p artisight-hello-world-all/DEBIAN
+          chmod 0755 artisight-hello-world-all/DEBIAN
+          chmod 644 artisight-hello-world-all/lib/systemd/system/artisight-hello-world.service
+          envsubst < control.template.all > artisight-hello-world-all/DEBIAN/control
+          dpkg-deb --build artisight-hello-world-all "${{ env.PACKAGE_NAME }}_${{ env.PACKAGE_VERSION }}_all.deb"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: deb-packages
+          path: '*.deb'
